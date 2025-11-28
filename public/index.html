@@ -2,69 +2,415 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Servidor do Renato</title>
+  <title>Clima no Brasil - Servidor do Renato</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #111827;
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background-color: #020617;
       color: #e5e7eb;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      min-height: 100vh;
+    }
+    header {
+      width: 100%;
+      max-width: 1080px;
+      padding: 24px 16px 8px;
     }
     h1 {
+      margin: 0;
+      font-size: 2rem;
       color: #22c55e;
     }
+    .subtitle {
+      margin-top: 4px;
+      color: #9ca3af;
+      font-size: 0.9rem;
+    }
+    main {
+      width: 100%;
+      max-width: 1080px;
+      padding: 8px 16px 32px;
+    }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .status {
+      font-size: 0.85rem;
+      color: #9ca3af;
+    }
+    button {
+      background: #22c55e;
+      border: none;
+      color: #020617;
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 0 0 1px #15803d44;
+      transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.1s ease;
+    }
+    button:hover {
+      background: #16a34a;
+      transform: translateY(-1px);
+      box-shadow: 0 18px 30px rgba(34,197,94,0.25);
+    }
+    button:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
     .card {
-      background: #020617;
-      padding: 20px 30px;
-      border-radius: 12px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.5);
-      text-align: center;
+      background: radial-gradient(circle at top left, #0f172a, #020617);
+      border-radius: 16px;
+      padding: 0;
       border: 1px solid #1f2937;
+      box-shadow: 0 12px 20px rgba(0,0,0,0.45);
+      position: relative;
+      overflow: hidden;
     }
-    p {
-      margin: 8px 0;
+    .card-body {
+      position: relative;
+      z-index: 2;
+      padding: 16px 18px;
     }
-    code {
-      background: #1f2937;
-      padding: 3px 6px;
-      border-radius: 4px;
+
+    .city-name {
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin-bottom: 4px;
+    }
+    .temp {
+      font-size: 2rem;
+      font-weight: 700;
+      margin: 4px 0;
+      color: #e5e7eb;
+    }
+    .desc {
+      font-size: 0.95rem;
+      color: #cbd5f5;
+      margin-bottom: 4px;
+    }
+    .extra {
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px 8px;
+      font-size: 0.7rem;
+      border-radius: 999px;
+      border: 1px solid #1f2937;
+      background: rgba(15,23,42,0.85);
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      color: #9ca3af;
+      z-index: 3;
+    }
+    footer {
+      width: 100%;
+      max-width: 1080px;
+      padding: 0 16px 16px;
+      font-size: 0.75rem;
+      color: #6b7280;
+      text-align: right;
+    }
+    a {
+      color: #22c55e;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 1.5rem;
+      }
+      main {
+        padding-bottom: 24px;
+      }
+    }
+
+    /* ===========================
+       ÍCONES ANIMADOS DE CLIMA
+       =========================== */
+    .icon-wrapper {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      opacity: 0.55;
+    }
+    .icon-wrapper.day {
+      mix-blend-mode: screen;
+    }
+    .icon-wrapper.night {
+      mix-blend-mode: lighten;
+    }
+    .icon-layer {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Sol */
+    .icon-sun .icon-layer.back {
+      background: radial-gradient(circle at 20% 0%, rgba(250,204,21,0.2), transparent 60%);
+      animation: floatDrift 18s linear infinite alternate;
+    }
+    .icon-sun .icon-layer.front {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: #facc15;
+      box-shadow: 0 0 40px rgba(250,204,21,0.9);
+      position: absolute;
+      top: -25px;
+      right: -25px;
+      animation: pulseSun 4s ease-in-out infinite;
+    }
+
+    /* Lua */
+    .icon-moon .icon-layer.back {
+      background: radial-gradient(circle at 80% 0%, rgba(59,130,246,0.35), transparent 60%);
+      animation: floatDrift 22s linear infinite alternate-reverse;
+    }
+    .icon-moon .icon-layer.front {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: #e5e7eb;
+      position: absolute;
+      top: -10px;
+      right: -20px;
+      box-shadow: 0 0 25px rgba(59,130,246,0.7);
+      overflow: hidden;
+    }
+    .icon-moon .icon-layer.front::before {
+      content: "";
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: #020617;
+      top: 8px;
+      left: 18px;
+      opacity: 0.9;
+    }
+
+    /* Nuvens */
+    .icon-clouds .icon-layer.back {
+      background: radial-gradient(circle at 0% 0%, rgba(148,163,184,0.25), transparent 65%);
+    }
+    .icon-clouds .icon-layer.front,
+    .icon-rain .icon-layer.front,
+    .icon-storm .icon-layer.front,
+    .icon-fog .icon-layer.front {
+      position: absolute;
+      bottom: -10px;
+      left: -10px;
+      right: -10px;
+      height: 70px;
+      background:
+        radial-gradient(circle at 10% 70%, #e5e7eb 0 30%, transparent 35%),
+        radial-gradient(circle at 35% 60%, #e5e7eb 0 30%, transparent 35%),
+        radial-gradient(circle at 65% 70%, #cbd5f5 0 28%, transparent 35%),
+        radial-gradient(circle at 90% 60%, #e5e7eb 0 26%, transparent 35%);
+      animation: cloudDrift 18s linear infinite alternate;
+    }
+
+    /* Chuva */
+    .icon-rain .icon-layer.back {
+      background: radial-gradient(circle at 0% 0%, rgba(59,130,246,0.25), transparent 70%);
+    }
+    .icon-rain .icon-layer.rain {
+      position: absolute;
+      inset: 20% 5% 0 5%;
+      background-image: linear-gradient(to bottom, rgba(96,165,250,0.7) 30%, transparent 70%);
+      background-size: 2px 14px;
+      background-repeat: repeat-x;
+      opacity: 0.7;
+      animation: rainFall 0.6s linear infinite;
+    }
+
+    /* Tempestade */
+    .icon-storm .icon-layer.back {
+      background:
+        radial-gradient(circle at 0% 0%, rgba(59,130,246,0.25), transparent 60%),
+        radial-gradient(circle at 100% 0%, rgba(15,23,42,0.9), transparent 70%);
+    }
+    .icon-storm .icon-layer.lightning {
+      position: absolute;
+      width: 0;
+      height: 0;
+      border-left: 10px solid transparent;
+      border-right: 10px solid transparent;
+      border-bottom: 26px solid #facc15;
+      top: 18%;
+      right: 20%;
+      transform: skewX(-15deg);
+      box-shadow: 0 0 18px rgba(250,204,21,0.9);
+      animation: lightningFlash 2.8s infinite;
+    }
+
+    /* Névoa */
+    .icon-fog .icon-layer.back {
+      background: linear-gradient(to bottom, rgba(148,163,184,0.2), transparent 70%);
+    }
+    .icon-fog .icon-layer.mist {
+      position: absolute;
+      inset: 40% 0 0;
+      background-image: linear-gradient(to right, rgba(148,163,184,0.6) 40%, transparent 60%);
+      background-size: 120px 3px;
+      background-repeat: repeat-y;
+      opacity: 0.7;
+      animation: fogDrift 14s linear infinite;
+    }
+
+    /* Animações */
+    @keyframes floatDrift {
+      from { transform: translate3d(-10px, 12px, 0); }
+      to   { transform: translate3d(12px, -8px, 0); }
+    }
+    @keyframes pulseSun {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 30px rgba(250,204,21,0.8); }
+      50%      { transform: scale(1.08); box-shadow: 0 0 45px rgba(250,204,21,1); }
+    }
+    @keyframes cloudDrift {
+      from { transform: translateX(0); }
+      to   { transform: translateX(12px); }
+    }
+    @keyframes rainFall {
+      from { background-position-y: 0; }
+      to   { background-position-y: 14px; }
+    }
+    @keyframes lightningFlash {
+      0%, 60%, 100% { opacity: 0; }
+      62%, 64% { opacity: 1; }
+      70% { opacity: 0; }
+      80% { opacity: 1; }
+      85% { opacity: 0; }
+    }
+    @keyframes fogDrift {
+      from { background-position-x: 0; }
+      to   { background-position-x: 80px; }
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <hr style="margin: 16px 0; border-color: #1f2937;" />
+  <header>
+    <h1>🌤️ Clima agora em capitais do Brasil</h1>
+    <p class="subtitle">
+      Dados em tempo quase real, direto do seu servidor no Render.
+    </p>
+  </header>
 
-<button id="btnPiada">Buscar piada</button>
-<p id="textoPiada" style="margin-top: 8px; font-size: 0.9rem;"></p>
-  </div>
+  <main>
+    <div class="top-bar">
+      <div class="status" id="status">Carregando clima...</div>
+      <button id="btnAtualizar">Atualizar agora</button>
+    </div>
+
+    <div class="grid" id="grid">
+      <!-- cards via JS -->
+    </div>
+  </main>
+
+  <footer>
+    Servidor do Renato • Node + Express • API: <a href="https://open-meteo.com/" target="_blank">Open-Meteo</a>
+  </footer>
 
   <script>
-  const btnPiada = document.getElementById('btnPiada');
-  const textoPiada = document.getElementById('textoPiada');
+    const grid = document.getElementById('grid');
+    const statusEl = document.getElementById('status');
+    const btnAtualizar = document.getElementById('btnAtualizar');
 
-  btnPiada.addEventListener('click', async () => {
-    textoPiada.textContent = 'Buscando piada...';
-
-    try {
-      const resp = await fetch('/api/piada');
-      const data = await resp.json();
-
-      if (data.ok) {
-        textoPiada.textContent = data.piada;
-      } else {
-        textoPiada.textContent = '⚠️ Não consegui buscar a piada.';
-      }
-    } catch (err) {
-      console.error(err);
-      textoPiada.textContent = '⚠️ Erro ao chamar a API.';
+    function formatarData(brIsoString) {
+      const d = new Date(brIsoString);
+      return d.toLocaleString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
     }
-  });
-</script>
 
+    async function carregarClima() {
+      statusEl.textContent = 'Carregando clima nas capitais...';
+      btnAtualizar.disabled = true;
+
+      try {
+        const resp = await fetch('/api/clima-brasil');
+        const data = await resp.json();
+
+        if (!data.ok) {
+          statusEl.textContent = 'Erro ao buscar clima. Tente novamente.';
+          btnAtualizar.disabled = false;
+          return;
+        }
+
+        grid.innerHTML = '';
+
+        data.cidades.forEach((cidade) => {
+          const card = document.createElement('div');
+          card.className = 'card';
+
+          const isNightClass = cidade.night ? 'night' : 'day';
+
+          card.innerHTML = `
+            <div class="icon-wrapper icon-${cidade.icon} ${isNightClass}">
+              <div class="icon-layer back"></div>
+              <div class="icon-layer front"></div>
+              ${
+                cidade.icon === 'rain'
+                  ? '<div class="icon-layer rain"></div>'
+                  : cidade.icon === 'storm'
+                  ? '<div class="icon-layer lightning"></div>'
+                  : cidade.icon === 'fog'
+                  ? '<div class="icon-layer mist"></div>'
+                  : ''
+              }
+            </div>
+
+            <div class="card-body">
+              <span class="badge">vento ${cidade.vento.toFixed(1)} km/h</span>
+              <div class="city-name">${cidade.nome}</div>
+              <div class="temp">${cidade.temperatura.toFixed(1)}°C</div>
+              <div class="desc">${cidade.descricao}</div>
+              <div class="extra">Atualizado: ${formatarData(cidade.horario)}</div>
+            </div>
+          `;
+
+          grid.appendChild(card);
+        });
+
+        statusEl.textContent = 'Clima atualizado agora.';
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = 'Erro ao chamar a API do servidor.';
+      } finally {
+        btnAtualizar.disabled = false;
+      }
+    }
+
+    btnAtualizar.addEventListener('click', carregarClima);
+
+    // Carrega automaticamente ao abrir a página
+    carregarClima();
+  </script>
 </body>
 </html>
