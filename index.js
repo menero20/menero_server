@@ -1,17 +1,19 @@
 const express = require('express');
 const app = express();
 
-// Render vai passar a porta na variável de ambiente PORT
 const port = process.env.PORT || 3000;
 
-// Middleware simples pra aceitar JSON (se quiser usar)
+// Aceitar JSON (se você quiser usar depois em APIs)
 app.use(express.json());
 
-// Rota básica pra testar
-app.get('/', (req, res) => {
+// ✅ Servir arquivos estáticos da pasta "public"
+app.use(express.static('public'));
+
+// (Opcional) rota de API só pra teste
+app.get('/api/status', (req, res) => {
   res.json({
     ok: true,
-    message: 'Servidor no Render está no ar!',
+    message: 'API está no ar junto com a página HTML!',
   });
 });
 
