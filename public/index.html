@@ -37,13 +37,34 @@
 </head>
 <body>
   <div class="card">
-    <h1>🚀 Servidor do Renato no Render</h1>
-    <p>Se você está vendo isso, o deploy funcionou! 😎</p>
-    <p>Backend: <code>Node + Express</code></p>
-    <p>Hospedado em: <code>Render</code></p>
-    <p style="margin-top: 12px; font-size: 0.9rem;">
-      Próximo passo: criar rotas de automação! 😉
-    </p>
+    <hr style="margin: 16px 0; border-color: #1f2937;" />
+
+<button id="btnPiada">Buscar piada</button>
+<p id="textoPiada" style="margin-top: 8px; font-size: 0.9rem;"></p>
   </div>
+
+  <script>
+  const btnPiada = document.getElementById('btnPiada');
+  const textoPiada = document.getElementById('textoPiada');
+
+  btnPiada.addEventListener('click', async () => {
+    textoPiada.textContent = 'Buscando piada...';
+
+    try {
+      const resp = await fetch('/api/piada');
+      const data = await resp.json();
+
+      if (data.ok) {
+        textoPiada.textContent = data.piada;
+      } else {
+        textoPiada.textContent = '⚠️ Não consegui buscar a piada.';
+      }
+    } catch (err) {
+      console.error(err);
+      textoPiada.textContent = '⚠️ Erro ao chamar a API.';
+    }
+  });
+</script>
+
 </body>
 </html>

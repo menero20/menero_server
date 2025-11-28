@@ -1,23 +1,30 @@
 const express = require('express');
+const axios = require('axios'); // 👈 novo
 const app = express();
 
 const port = process.env.PORT || 3000;
 
-// Aceitar JSON (se você quiser usar depois em APIs)
 app.use(express.json());
-
-// ✅ Servir arquivos estáticos da pasta "public"
 app.use(express.static('public'));
 
-// (Opcional) rota de API só pra teste
-app.get('/api/status', (req, res) => {
-  res.json({
-    ok: true,
-    message: 'API está no ar junto com a página HTML!',
-  });
+// Rota: chama API pública e devolve pro front
+app.get('/api/piada', async (req, res) => {
+  try {
+    const resposta = await axios.get('https://api.chucknorris.io/jokes/random');
+
+    res.json({
+      ok: true,
+      piada: resposta.data.value, // texto da piada
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({
+      ok: false,
+      message: 'Erro ao buscar piada na API externa',
+    });
+  }
 });
 
-// MUITO IMPORTANTE: ouvir em 0.0.0.0 e na porta do process.env.PORT
 app.listen(port, '0.0.0.0', () => {
   console.log(`Servidor rodando na porta ${port}`);
 });
