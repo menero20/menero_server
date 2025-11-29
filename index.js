@@ -15,7 +15,14 @@ const PORT = process.env.PORT || 3000;
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
-const contatosFile = path.join(__dirname, 'contatos.json');
+const isRender = process.env.RENDER === 'true';
+
+// No Render: grava em /tmp (ephemeral, some quando o serviço reinicia)
+// Local: continua usando um arquivo ao lado do index.js
+const contatosFile = isRender
+  ? path.join('/tmp', 'contatos.json')
+  : path.join(__dirname, 'contatos.json');
+
 
 // ==== FUNÇÕES AUXILIARES PRA ARQUIVO ====
 
