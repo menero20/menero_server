@@ -101,95 +101,106 @@
   </section>
 
   <script>
+    const API_BASE = 'https://aeriform-proapostolic-alvin.ngrok-free.dev'; // URL do ngrok apontando pro seu PC
+
     const listaContatosBody = document.getElementById('listaContatos');
-    const formContato = document.getElementById('formContato');
-    const statusElem = document.getElementById('status');
-    const mensagemInput = document.getElementById('mensagem');
-    const btnDisparar = document.getElementById('btnDisparar');
+  const formContato = document.getElementById('formContato');
+  const statusElem = document.getElementById('status');
+  const mensagemInput = document.getElementById('mensagem');
+  const btnDisparar = document.getElementById('btnDisparar');
 
-    const API_BASE = 'https://abc1234.ngrok.io'; // URL do ngrok apontando pro seu PC
+  async function carregarContatos() {
+    try {
+      const res = await fetch(API_BASE + '/api/contatos');
+      const contatos = await res.json();
+      renderizarContatos(contatos);
+    } catch (err) {
+      console.error('Erro ao carregar contatos:', err);
+      listaContatosBody.innerHTML =
+        '<tr><td colspan="3">Erro ao carregar contatos (verifique se o servidor local e o ngrok estão rodando).</td></tr>';
+    }
+  }
 
-    async function carregarContatos() {
-    const res = await fetch(API_BASE + '/api/contatos');
-    const contatos = await res.json();
-    renderizarContatos(contatos);
+  function renderizarContatos(contatos) {
+    listaContatosBody.innerHTML = '';
+    if (!contatos.length) {
+      listaContatosBody.innerHTML =
+        '<tr><td colspan="3">Nenhum contato cadastrado.</td></tr>';
+      return;
     }
 
-    function renderizarContatos(contatos) {
-      listaContatosBody.innerHTML = '';
-      if (!contatos.length) {
-        listaContatosBody.innerHTML = '<tr><td colspan="3">Nenhum contato cadastrado.</td></tr>';
-        return;
-      }
+    for (const contato of contatos) {
+      const tr = document.createElement('tr');
 
-      for (const contato of contatos) {
-        const tr = document.createElement('tr');
+      const tdNome = document.createElement('td');
+      tdNome.textContent = contato.nome;
+      tr.appendChild(tdNome);
 
-        const tdNome = document.createElement('td');
-        tdNome.textContent = contato.nome;
-        tr.appendChild(tdNome);
+      const tdTel = document.createElement('td');
+      tdTel.textContent = contato.telefone;
+      tr.appendChild(tdTel);
 
-        const tdTel = document.createElement('td');
-        tdTel.textContent = contato.telefone;
-        tr.appendChild(tdTel);
+      const tdAcoes = document.createElement('td');
+      const btnRemover = document.createElement('button');
+      btnRemover.textContent = 'Remover';
+      btnRemover.className = 'btn-remover';
+      btnRemover.onclick = async () => {
+        if (confirm(`Remover ${contato.nome}?`)) {
+          await fetch(API_BASE + '/api/contatos/' + contato.id, {
+            method: 'DELETE'
+          });
+          carregarContatos();
+        }
+      };
+      tdAcoes.appendChild(btnRemover);
+      tr.appendChild(tdAcoes);
 
-        const tdAcoes = document.createElement('td');
-        const btnRemover = document.createElement('button');
-        btnRemover.textContent = 'Remover';
-        btnRemover.className = 'btn-remover';
-        btnRemover.onclick = async () => {
-          if (confirm(`Remover ${contato.nome}?`)) {
-            await fetch('/api/contatos/' + contato.id, { method: 'DELETE' });
-            carregarContatos();
-          }
-        };
-        tdAcoes.appendChild(btnRemover);
-        tr.appendChild(tdAcoes);
-
-        listaContatosBody.appendChild(tr);
-      }
+      listaContatosBody.appendChild(tr);
     }
+  }
 
-    formContato.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const nome = document.getElementById('nome').value.trim();
-      const telefone = document.getElementById('telefone').value.trim();
+  formContato.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const nome = document.getElementById('nome').value.trim();
+    const telefone = document.getElementById('telefone').value.trim();
 
-      if (!nome || !telefone) return;
+    if (!nome || !telefone) return;
 
-      await fetch(API_BASE + '/api/contatos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome, telefone })
-      });
-
-      formContato.reset();
-      carregarContatos();
+    await fetch(API_BASE + '/api/contatos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nome, telefone })
     });
 
-    btnDisparar.addEventListener('click', async () => {
-      const mensagem = mensagemInput.value.trim();
-      if (!mensagem) {
-        alert('Digite uma mensagem para disparar.');
-        return;
-      }
-
-      statusElem.textContent = 'Iniciando disparo... (vá até a janela do Chrome para ler o QR, se pedir)';
-      const res = await fetch(API_BASE + '/api/disparar', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mensagem })
-    });
-
-      const data = await res.json();
-      if (data.erro) {
-        statusElem.textContent = 'Erro: ' + data.erro;
-      } else {
-        statusElem.textContent = 'Disparo iniciado! Acompanhe pelo console do servidor.';
-      }
-    });
-
+    formContato.reset();
     carregarContatos();
+  });
+
+  btnDisparar.addEventListener('click', async () => {
+    const mensagem = mensagemInput.value.trim();
+    if (!mensagem) {
+      alert('Digite uma mensagem para disparar.');
+      return;
+    }
+
+    statusElem.textContent =
+      'Iniciando disparo... (vá até a janela do Chrome, se abrir, para ler o QR na primeira vez)';
+    const res = await fetch(API_BASE + '/api/disparar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mensagem })
+    });
+
+    const data = await res.json();
+    if (data.erro) {
+      statusElem.textContent = 'Erro: ' + data.erro;
+    } else {
+      statusElem.textContent =
+        'Disparo iniciado! Acompanhe no console do servidor local.';
+    }
+  });
+
+  carregarContatos();
   </script>
 </body>
 </html>
